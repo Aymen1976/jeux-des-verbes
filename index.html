@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Roue de la Fortune - Les Verbes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f0f2f5;
+            overflow-x: hidden;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .phrase {
+            font-size: 24px;
+            margin: 20px 0;
+            text-align: center;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .select-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        select {
+            padding: 10px;
+            font-size: 16px;
+            width: 200px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        select:hover {
+            border-color: #4CAF50;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .message {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .correct {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border: 1px solid #d6e9c6;
+        }
+        .incorrect {
+            background-color: #f2dede;
+            color: #a94442;
+            border: 1px solid #ebccd1;
+        }
+        h1, .score {
+            text-align: center;
+            color: #333;
+        }
+        .score {
+            font-size: 20px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .placeholder-option {
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Animation feux d'artifice */
+        .firework {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: explode 1s ease-out forwards;
+            pointer-events: none;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(20);
+                opacity: 0;
+            }
+        }
+
+        /* Animation emoji mauvaise réponse */
+        .wrong-answer {
+            font-size: 50px;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            75% { transform: rotate(15deg); }
+        }
+
+        /* Animation score */
+        .score-update {
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Animation confetti */
+        .confetti {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: #f00;
+            animation: fall 3s linear forwards;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100%) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(1000%) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Roue de la Fortune - Les Verbes</h1>
+        <div class="score" id="score">Score : 0</div>
+        <div class="phrase" id="phrase"></div>
+        <div class="select-group">
+            <select id="choix-reponse">
+                <option value="" class="placeholder-option">Choisissez le verbe...</option>
+            </select>
+            <button onclick="verifierReponse()">Valider</button>
+        </div>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        const phrases = [
+            {
+                phrase: "Les oiseaux _____ dans le ciel.",
+                reponseCorrecte: "volent",
+                mauvaisesReponses: ["mangent", "dorment"]
+            },
+            {
+                phrase: "Le soleil _____ tous les matins.",
+                reponseCorrecte: "brille",
+                mauvaisesReponses: ["dort", "court"]
+            },
+            {
+                phrase: "Les enfants _____ dans le parc.",
+                reponseCorrecte: "jouent",
+                mauvaisesReponses: ["pleurent", "tombent"]
+            },
+            {
+                phrase: "Le chat _____ sur le canapé.",
+                reponseCorrecte: "dort",
+                mauvaisesReponses: ["crie", "saute"]
+            },
+            {
+                phrase: "La pluie _____ depuis ce matin.",
+                reponseCorrecte: "tombe",
+                mauvaisesReponses: ["monte", "chante"]
+            }
+        ];
+
+        function createFirework(x, y) {
+            const colors = ['#ff0', '#f0f', '#0ff', '#f00', '#0f0', '#00f'];
+            const firework = document.createElement('div');
+            firework.className = 'firework';
+            firework.style.left = x + 'px';
+            firework.style.top = y + 'px';
+            firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            document.body.appendChild(firework);
+            setTimeout(() => firework.remove(), 1000);
+        }
+
+        function createConfetti() {
+            const colors = ['#ff0', '#f0f', '#0ff', '#f00', '#0f0', '#00f'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+
+        function celebrerBonneReponse() {
+            createConfetti();
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    createFirework(
+                        Math.random() * window.innerWidth,
+                        Math.random() * window.innerHeight
+                    );
+                }, i * 200);
+            }
+        }
+
+        let currentPhraseIndex = 0;
+        let score = 0;
+        let phrasesJouees = [];
+
+        function melangerTableau(tableau) {
+            return [...tableau].sort(() => Math.random() - 0.5);
+        }
+
+        function afficherPhrase() {
+            const phraseActuelle = phrases[currentPhraseIndex];
+            document.getElementById('phrase').textContent = phraseActuelle.phrase;
+            
+            const toutesLesOptions = [
+                phraseActuelle.reponseCorrecte,
+                ...phraseActuelle.mauvaisesReponses
+            ];
+            const optionsMelangees = melangerTableau(toutesLesOptions);
+            
+            const select = document.getElementById('choix-reponse');
+            select.innerHTML = '<option value="" class="placeholder-option">Choisissez le verbe...</option>';
+            
+            optionsMelangees.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option;
+                select.appendChild(optionElement);
+            });
+        }
+
+        function verifierReponse() {
+            const reponseChoisie = document.getElementById('choix-reponse').value;
+            const phraseActuelle = phrases[currentPhraseIndex];
+            const messageElement = document.getElementById('message');
+            const scoreElement = document.getElementById('score');
+
+            if (!reponseChoisie) {
+                messageElement.textContent = "Veuillez choisir une réponse !";
+                messageElement.className = "message incorrect";
+                return;
+            }
+
+            if (reponseChoisie === phraseActuelle.reponseCorrecte) {
+                score++;
+                messageElement.innerHTML = "Bravo ! C'est la bonne réponse ! 🎉";
+                messageElement.className = "message correct";
+                scoreElement.classList.add('score-update');
+                celebrerBonneReponse();
+            } else {
+                messageElement.innerHTML = `Dommage ! La bonne réponse était : ${phraseActuelle.reponseCorrecte} 😝`;
+                messageElement.className = "message incorrect wrong-answer";
+            }
+
+            scoreElement.textContent = `Score : ${score}`;
+            setTimeout(() => scoreElement.classList.remove('score-update'), 500);
+            phrasesJouees.push(currentPhraseIndex);
+
+            if (phrasesJouees.length === phrases.length) {
+                setTimeout(() => {
+                    messageElement.innerHTML = `
+                        Jeu terminé ! Votre score final : ${score}/${phrases.length}<br><br>
+                        <button onclick="recommencer()">Rejouer</button>
+                    `;
+                    document.querySelector('.select-group').style.display = 'none';
+                }, 1500);
+            } else {
+                setTimeout(phraseSuivante, 2000);
+            }
+        }
+
+        function phraseSuivante() {
+            const phrasesRestantes = phrases
+                .map((_, index) => index)
+                .filter(index => !phrasesJouees.includes(index));
+
+            if (phrasesRestantes.length > 0) {
+                const randomIndex = Math.floor(Math.random() * phrasesRestantes.length);
+                currentPhraseIndex = phrasesRestantes[randomIndex];
+                document.getElementById('message').textContent = '';
+                afficherPhrase();
+            }
+        }
+
+        function recommencer() {
+            score = 0;
+            phrasesJouees = [];
+            currentPhraseIndex = 0;
+            document.getElementById('score').textContent = `Score : ${score}`;
+            document.getElementById('message').textContent = '';
+            document.querySelector('.select-group').style.display = 'flex';
+            afficherPhrase();
+        }
+
+        afficherPhrase();
+    </script>
+</body>
+</html>
